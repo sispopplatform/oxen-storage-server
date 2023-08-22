@@ -6,13 +6,13 @@
 #include <string_view>
 #include <vector>
 
-namespace lokimq {
-class LokiMQ;
+namespace sispopmq {
+class SispopMQ;
 struct Allow;
 class Message;
-} // namespace lokimq
+} // namespace sispopmq
 
-using lokimq::LokiMQ;
+using sispopmq::SispopMQ;
 
 namespace oxen {
 
@@ -20,9 +20,9 @@ struct oxend_key_pair_t;
 class ServiceNode;
 class RequestHandler;
 
-class LokimqServer {
+class SispopmqServer {
 
-    std::unique_ptr<LokiMQ> lokimq_;
+    std::unique_ptr<SispopMQ> sispopmq_;
 
     // Has information about current SNs
     ServiceNode* service_node_;
@@ -33,17 +33,17 @@ class LokimqServer {
     std::string peer_lookup(std::string_view pubkey_bin) const;
 
     // Handle Session data coming from peer SN
-    void handle_sn_data(lokimq::Message& message);
+    void handle_sn_data(sispopmq::Message& message);
 
     // Handle Session client requests arrived via proxy
-    void handle_sn_proxy_exit(lokimq::Message& message);
+    void handle_sn_proxy_exit(sispopmq::Message& message);
 
     // v2 indicates whether to use the new (v2) protocol
-    void handle_onion_request(lokimq::Message& message, bool v2);
+    void handle_onion_request(sispopmq::Message& message, bool v2);
 
-    void handle_get_logs(lokimq::Message& message);
+    void handle_get_logs(sispopmq::Message& message);
 
-    void handle_get_stats(lokimq::Message& message);
+    void handle_get_stats(sispopmq::Message& message);
 
     uint16_t port_ = 0;
 
@@ -51,21 +51,21 @@ class LokimqServer {
     std::vector<std::string> stats_access_keys;
 
   public:
-    LokimqServer(uint16_t port);
-    ~LokimqServer();
+    SispopmqServer(uint16_t port);
+    ~SispopmqServer();
 
-    // Initialize lokimq
+    // Initialize sispopmq
     void init(ServiceNode* sn, RequestHandler* rh,
               const oxend_key_pair_t& keypair,
               const std::vector<std::string>& stats_access_key);
 
     uint16_t port() { return port_; }
 
-    /// True if LokiMQ instance has been set
-    explicit operator bool() const { return (bool)lokimq_; }
-    /// Dereferencing via * or -> accesses the contained LokiMQ instance.
-    LokiMQ& operator*() const { return *lokimq_; }
-    LokiMQ* operator->() const { return lokimq_.get(); }
+    /// True if SispopMQ instance has been set
+    explicit operator bool() const { return (bool)sispopmq_; }
+    /// Dereferencing via * or -> accesses the contained SispopMQ instance.
+    SispopMQ& operator*() const { return *sispopmq_; }
+    SispopMQ* operator->() const { return sispopmq_.get(); }
 };
 
 } // namespace oxen

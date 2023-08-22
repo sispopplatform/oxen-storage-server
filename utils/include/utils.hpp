@@ -28,7 +28,7 @@ std::mt19937_64& rng();
 /// Returns a random number from [0, n) using `rng()`
 uint64_t uniform_distribution_portable(uint64_t n);
 
-/// Returns a random number from [0, n); (copied from lokid)
+/// Returns a random number from [0, n); (copied from sispopd)
 uint64_t uniform_distribution_portable(std::mt19937_64& mersenne_twister,
                                        uint64_t n);
 

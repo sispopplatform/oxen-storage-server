@@ -20,11 +20,11 @@ struct sn_record_t {
 
   private:
     uint16_t port_;
-    // Required by LokiMQ
+    // Required by SispopMQ
     uint16_t lmq_port_;
     // TODO: create separate types for different encodings of pubkeys,
     // so if we confuse them, it will be a compiler error
-    // Snode address (pubkey plus .snode, was used for lokinet)
+    // Snode address (pubkey plus .snode, was used for sispopnet)
     std::string sn_address_;
     // We don't need this! (esp. since it is legacy key)
     std::string pub_key_base_32z_;

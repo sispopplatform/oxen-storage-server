@@ -29,7 +29,7 @@ find_package(Threads)
 target_link_libraries(crypto PRIVATE
     sodium
     Boost::boost
-    lokimq::lokimq
+    sispopmq::sispopmq
     filesystem
     Threads::Threads
     ${CMAKE_DL_LIBS})

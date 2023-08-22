@@ -64,7 +64,7 @@ else()
   add_library(sodium INTERFACE)
   target_link_libraries(sodium INTERFACE PkgConfig::SODIUM)
 
-  # Need this target export so that loki-mq properly picks up sodium
+  # Need this target export so that sispop-mq properly picks up sodium
   export(TARGETS sodium NAMESPACE sodium:: FILE sodium-exports.cmake)
 
   find_package(Boost REQUIRED system program_options)
@@ -83,8 +83,8 @@ add_subdirectory(crypto)
 add_subdirectory(pow)
 add_subdirectory(storage)
 add_subdirectory(httpserver)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "disable shared libraries") # Tells loki-mq to do a static build
-add_subdirectory(vendors/loki-mq)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "disable shared libraries") # Tells sispop-mq to do a static build
+add_subdirectory(vendors/sispop-mq)
 
 if (BUILD_TESTS)
     add_subdirectory(unit_test)

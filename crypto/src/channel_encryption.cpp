@@ -3,7 +3,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <sodium.h>
-#include <lokimq/hex.h>
+#include <sispopmq/hex.h>
 
 #include "utils.hpp"
 
@@ -14,9 +14,9 @@
 
 std::vector<uint8_t> hexToBytes(const std::string& hex) {
     std::vector<uint8_t> temp;
-    if (!lokimq::is_hex(hex)) throw std::runtime_error{"input is not hex"};
+    if (!sispopmq::is_hex(hex)) throw std::runtime_error{"input is not hex"};
     temp.reserve(hex.size() / 2);
-    lokimq::from_hex(hex.begin(), hex.end(), std::back_inserter(temp));
+    sispopmq::from_hex(hex.begin(), hex.end(), std::back_inserter(temp));
     return temp;
 }
 
@@ -51,7 +51,7 @@ derive_symmetric_key(const std::vector<uint8_t>& seckey,
 
     std::vector<uint8_t> derived_key(32);
 
-    const std::string salt_str = "LOKI";
+    const std::string salt_str = "SISPOP";
     const auto salt = reinterpret_cast<const unsigned char*>(salt_str.data());
 
     crypto_auth_hmacsha256_state state;

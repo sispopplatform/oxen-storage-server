@@ -7,15 +7,15 @@
 #include "request_handler.h"
 #include "service_node.h"
 
-#include <lokimq/hex.h>
-#include <lokimq/lokimq.h>
+#include <sispopmq/hex.h>
+#include <sispopmq/sispopmq.h>
 #include <nlohmann/json.hpp>
 
 #include <optional>
 
 namespace oxen {
 
-std::string LokimqServer::peer_lookup(std::string_view pubkey_bin) const {
+std::string SispopmqServer::peer_lookup(std::string_view pubkey_bin) const {
 
     OXEN_LOG(trace, "[LMQ] Peer Lookup");
 
@@ -31,11 +31,11 @@ std::string LokimqServer::peer_lookup(std::string_view pubkey_bin) const {
     }
 }
 
-void LokimqServer::handle_sn_data(lokimq::Message& message) {
+void SispopmqServer::handle_sn_data(sispopmq::Message& message) {
 
     OXEN_LOG(debug, "[LMQ] handle_sn_data");
     OXEN_LOG(debug, "[LMQ]   thread id: {}", std::this_thread::get_id());
-    OXEN_LOG(debug, "[LMQ]   from: {}", lokimq::to_hex(message.conn.pubkey()));
+    OXEN_LOG(debug, "[LMQ]   from: {}", sispopmq::to_hex(message.conn.pubkey()));
 
     std::stringstream ss;
 
@@ -54,11 +54,11 @@ void LokimqServer::handle_sn_data(lokimq::Message& message) {
     message.send_reply();
 };
 
-void LokimqServer::handle_sn_proxy_exit(lokimq::Message& message) {
+void SispopmqServer::handle_sn_proxy_exit(sispopmq::Message& message) {
 
     OXEN_LOG(debug, "[LMQ] handle_sn_proxy_exit");
     OXEN_LOG(debug, "[LMQ]   thread id: {}", std::this_thread::get_id());
-    OXEN_LOG(debug, "[LMQ]   from: {}", lokimq::to_hex(message.conn.pubkey()));
+    OXEN_LOG(debug, "[LMQ]   from: {}", sispopmq::to_hex(message.conn.pubkey()));
 
     if (message.data.size() != 2) {
         OXEN_LOG(debug, "Expected 2 message parts, got {}",
@@ -79,13 +79,13 @@ void LokimqServer::handle_sn_proxy_exit(lokimq::Message& message) {
             OXEN_LOG(debug, "    Proxy exit status: {}", res.status());
 
             if (res.status() == Status::OK) {
-                this->lokimq_->send(origin_pk, "REPLY", reply_tag,
+                this->sispopmq_->send(origin_pk, "REPLY", reply_tag,
                                     res.message());
 
             } else {
                 // We reply with 2 messages which will be treated as
                 // an error (rather than timeout)
-                this->lokimq_->send(origin_pk, "REPLY", reply_tag,
+                this->sispopmq_->send(origin_pk, "REPLY", reply_tag,
                                     fmt::format("{}", res.status()),
                                     res.message());
                 OXEN_LOG(debug, "Error: status is not OK for proxy_exit: {}",
@@ -94,7 +94,7 @@ void LokimqServer::handle_sn_proxy_exit(lokimq::Message& message) {
         });
 }
 
-void LokimqServer::handle_onion_request(lokimq::Message& message, bool v2) {
+void SispopmqServer::handle_onion_request(sispopmq::Message& message, bool v2) {
 
     OXEN_LOG(debug, "Got an onion request over OXENMQ");
 
@@ -107,7 +107,7 @@ void LokimqServer::handle_onion_request(lokimq::Message& message, bool v2) {
 
         std::string status = std::to_string(static_cast<int>(res.status()));
 
-        lokimq_->send(origin_pk, "REPLY", reply_tag, std::move(status),
+        sispopmq_->send(origin_pk, "REPLY", reply_tag, std::move(status),
                       res.message());
     };
 
@@ -137,7 +137,7 @@ void LokimqServer::handle_onion_request(lokimq::Message& message, bool v2) {
                                         std::string(eph_key), on_response, v2);
 }
 
-void LokimqServer::handle_get_logs(lokimq::Message& message) {
+void SispopmqServer::handle_get_logs(sispopmq::Message& message) {
 
     OXEN_LOG(debug, "Received get_logs request via LMQ");
 
@@ -156,7 +156,7 @@ void LokimqServer::handle_get_logs(lokimq::Message& message) {
     message.send_reply(val.dump(4));
 }
 
-void LokimqServer::handle_get_stats(lokimq::Message& message) {
+void SispopmqServer::handle_get_stats(sispopmq::Message& message) {
 
     OXEN_LOG(debug, "Received get_stats request via LMQ");
 
@@ -165,26 +165,26 @@ void LokimqServer::handle_get_stats(lokimq::Message& message) {
     message.send_reply(payload);
 }
 
-void LokimqServer::init(ServiceNode* sn, RequestHandler* rh,
+void SispopmqServer::init(ServiceNode* sn, RequestHandler* rh,
                         const oxend_key_pair_t& keypair,
                         const std::vector<std::string>& stats_access_keys) {
 
-    using lokimq::Allow;
+    using sispopmq::Allow;
 
     service_node_ = sn;
     request_handler_ = rh;
 
     for (const auto& key : stats_access_keys) {
-        this->stats_access_keys.push_back(lokimq::from_hex(key));
+        this->stats_access_keys.push_back(sispopmq::from_hex(key));
     }
 
     auto pubkey = key_to_string(keypair.public_key);
     auto seckey = key_to_string(keypair.private_key);
 
-    auto logger = [](lokimq::LogLevel level, const char* file, int line,
+    auto logger = [](sispopmq::LogLevel level, const char* file, int line,
                      std::string message) {
 #define LMQ_LOG_MAP(LMQ_LVL, SS_LVL)                                           \
-    case lokimq::LogLevel::LMQ_LVL:                                            \
+    case sispopmq::LogLevel::LMQ_LVL:                                            \
         OXEN_LOG(SS_LVL, "[{}:{}]: {}", file, line, message);                  \
         break;
         switch (level) {
@@ -201,43 +201,43 @@ void LokimqServer::init(ServiceNode* sn, RequestHandler* rh,
 
     auto lookup_fn = [this](auto pk) { return this->peer_lookup(pk); };
 
-    lokimq_.reset(new LokiMQ{pubkey, seckey, true /* is service node */,
+    sispopmq_.reset(new SispopMQ{pubkey, seckey, true /* is service node */,
                              lookup_fn, logger});
 
-    OXEN_LOG(info, "LokiMQ is listenting on port {}", port_);
+    OXEN_LOG(info, "SispopMQ is listenting on port {}", port_);
 
-    lokimq_->log_level(lokimq::LogLevel::info);
+    sispopmq_->log_level(sispopmq::LogLevel::info);
     // clang-format off
-    lokimq_->add_category("sn", lokimq::Access{lokimq::AuthLevel::none, true, false})
+    sispopmq_->add_category("sn", sispopmq::Access{sispopmq::AuthLevel::none, true, false})
         .add_request_command("data", [this](auto& m) { this->handle_sn_data(m); })
         .add_request_command("proxy_exit", [this](auto& m) { this->handle_sn_proxy_exit(m); })
         .add_request_command("onion_req", [this](auto& m) { this->handle_onion_request(m, false); })
         .add_request_command("onion_req_v2", [this](auto& m) { this->handle_onion_request(m, true); })
         ;
 
-    lokimq_->add_category("service", lokimq::AuthLevel::admin)
+    sispopmq_->add_category("service", sispopmq::AuthLevel::admin)
         .add_request_command("get_stats", [this](auto& m) { this->handle_get_stats(m); })
         .add_request_command("get_logs", [this](auto& m) { this->handle_get_logs(m); });
 
     // clang-format on
-    lokimq_->set_general_threads(1);
+    sispopmq_->set_general_threads(1);
 
-    lokimq_->listen_curve(
+    sispopmq_->listen_curve(
         fmt::format("tcp://0.0.0.0:{}", port_),
         [this](std::string_view /*ip*/, std::string_view pk, bool /*sn*/) {
             const auto& keys = this->stats_access_keys;
             const auto it = std::find(keys.begin(), keys.end(), pk);
-            return it == keys.end() ? lokimq::AuthLevel::none
-                                    : lokimq::AuthLevel::admin;
+            return it == keys.end() ? sispopmq::AuthLevel::none
+                                    : sispopmq::AuthLevel::admin;
         });
 
-    lokimq_->MAX_MSG_SIZE =
+    sispopmq_->MAX_MSG_SIZE =
         10 * 1024 * 1024; // 10 MB (needed by the fileserver)
 
-    lokimq_->start();
+    sispopmq_->start();
 }
 
-LokimqServer::LokimqServer(uint16_t port) : port_(port){};
-LokimqServer::~LokimqServer() = default;
+SispopmqServer::SispopmqServer(uint16_t port) : port_(port){};
+SispopmqServer::~SispopmqServer() = default;
 
 } // namespace oxen

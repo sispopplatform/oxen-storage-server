@@ -7,7 +7,7 @@
 
 #include "https_client.h"
 
-#include <lokimq/base64.h>
+#include <sispopmq/base64.h>
 #include <nlohmann/json.hpp>
 
 using nlohmann::json;
@@ -378,10 +378,10 @@ Response RequestHandler::wrap_proxy_response(const Response& res,
     std::string ciphertext;
 
     if (use_gcm) {
-        ciphertext = lokimq::to_base64(
+        ciphertext = sispopmq::to_base64(
             channel_cipher_.encrypt_gcm(res_body, client_key));
     } else {
-        ciphertext = lokimq::to_base64(
+        ciphertext = sispopmq::to_base64(
             channel_cipher_.encrypt_cbc(res_body, client_key));
     }
 
@@ -416,7 +416,7 @@ void RequestHandler::process_lns_request(
 
 #ifdef INTEGRATION_TEST
     // use mainnet seed
-    oxend_client_.make_custom_oxend_request("public.loki.foundation", 22023,
+    oxend_client_.make_custom_oxend_request("public.sispop.site", 30000,
                                             "lns_names_to_owners", params,
                                             std::move(on_oxend_res));
 #else
